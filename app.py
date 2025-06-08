@@ -62,8 +62,8 @@ def login():
             return redirect(url_for('login'))
 
         if not user.is_active:
-            flash('账户已被注销', 'error')
-            return redirect(url_for('login'))
+            flash('账户未激活，请先激活账户', 'warning')
+            return redirect(url_for('activate'))  # 重定向到激活页面
 
         if check_password_hash(user.password, password):
             session['user_id'] = user.id
@@ -97,6 +97,31 @@ def register():
     return render_template('register.html')
 
 
+@app.route('/activate', methods=['GET', 'POST'])
+def activate():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            flash('账户不存在', 'error')
+            return redirect(url_for('activate'))
+
+        if not check_password_hash(user.password, password):
+            flash('密码错误', 'error')
+            return redirect(url_for('activate'))
+
+        # 激活账户
+        user.is_active = True
+        db.session.commit()
+
+        flash('账户已激活，请登录', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('activate.html')
+
 @app.route('/home')
 def home():
     if 'user_id' not in session:
@@ -107,12 +132,11 @@ def home():
 @app.route('/logout', methods=['GET', 'POST'])  # 同时支持GET和POST
 def logout():
     """退出登录，保留账户"""
-    """
     if 'user_id' in session:
         user = User.query.filter_by(id=session['user_id']).first()
         user.is_active = False
         db.session.commit()
-    """
+
     session.clear()
     flash('您已安全退出，可以随时登录', 'info')
     return redirect(url_for('login'))
