@@ -107,11 +107,12 @@ def home():
 @app.route('/logout', methods=['GET', 'POST'])  # 同时支持GET和POST
 def logout():
     """退出登录，保留账户"""
+    """
     if 'user_id' in session:
         user = User.query.filter_by(id=session['user_id']).first()
         user.is_active = False
         db.session.commit()
-
+    """
     session.clear()
     flash('您已安全退出，可以随时登录', 'info')
     return redirect(url_for('login'))
