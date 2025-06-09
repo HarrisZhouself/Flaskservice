@@ -60,8 +60,6 @@ class TestUI:
             driver.find_element(By.ID, "password").send_keys(b)
             driver.find_element(By.ID, "login_submit").click()
 
-            #设置用户不活跃
-            User.is_active = False
             # 验证登录成功
             # 检查是否跳转到 /home
             WebDriverWait(driver, 10).until(
@@ -71,12 +69,11 @@ class TestUI:
             driver.find_element(By.ID, "logout_submit").click()
 
             WebDriverWait(driver, 10).until(
-                EC.url_contains("/login")  # 检查是否跳转到首页
+                EC.url_contains("/login")  # 检查是否跳转到登录页
             )
 
             assert "login_submit" in driver.page_source  # 检查登出按钮
-            assert "您已安全退出，可以随时登录" in driver.page_source
-            assert User.is_active is False
+            assert "您已安全退出，在激活后可以重新登录" in driver.page_source
 
         finally:
             driver.quit()
