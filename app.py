@@ -142,7 +142,7 @@ def register():
             session['username'] = username
             session.permanent = True
 
-            flash('注册并登录成功！', 'success')
+            flash('注册成功！请登录', 'success')
             return redirect(url_for('login'))
 
         except Exception as e:

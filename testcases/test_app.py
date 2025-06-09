@@ -24,7 +24,7 @@ class TestRegisterPage:
 
         assert response.status_code == 200
         assert '用户登录' in response.get_data(as_text=True)
-        assert '注册成功，请登录' in response.get_data(as_text=True)
+        assert '注册成功！请登录' in response.get_data(as_text=True)
 
 
     #边界值法测试登录
