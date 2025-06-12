@@ -7,6 +7,8 @@
         .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
         .alert-error { background: #ffebee; color: #c62828; }
         .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .alert-warning { background: #fff8e1; color: #ff8f00; }
+        .lock-info { color: #d32f2f; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -16,7 +18,14 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                        {% if '锁定' in message or '锁定24小时' in message %}
+                            <div class="lock-info">
+                                出于安全考虑，多次失败登录会导致账户被暂时锁定。
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -34,6 +43,7 @@
         </form>
 
         <p>还没有账号？<a href="{{ url_for('register') }}">立即注册</a></p>
+        <p>忘记密码？<a href="#">重置密码</a></p>
     </div>
 </body>
 </html>

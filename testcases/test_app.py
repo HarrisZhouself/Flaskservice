@@ -1,3 +1,5 @@
+from time import sleep
+
 import pytest
 from app import User
 class TestLogin:
@@ -93,8 +95,6 @@ class TestUserActive:
     #模拟用户注册后登录----场景模拟法
     @pytest.mark.parametrize("a,b",[('testUser_name14','3edc$RFV'),('testUser_name15','4rfv%TGB'),('testUser_name16','5tgb^YHN'),('testUser_name17','6yhn&UJM'),('testUser_name18','8ik,(OL>')])
     def test_register_then_login(self, client,a, b):
-
-
         response = client.post('/register', data = {
             'username': a,
             'password': b,
@@ -129,4 +129,41 @@ class TestUserActive:
         assert response.status_code == 200
         assert '用户登录'.encode('utf_8') in response.data
 
+class TestErrorPassWordCount:
+    @pytest.mark.parametrize("a,b",[('testUser_name25','5tgb^YHN')])
+    def test_error_password_count(self, client,a,b):
+        response = client.post('/register', data = {
+            'username': a,
+            'password': b,
+        }, follow_redirects = True)
 
+        first_total_failed_attempts = 5
+        current_attempt_count = 0
+
+        while current_attempt_count >= 5:
+            current_attempt_count += 1
+            response = client.post('/login', data = {
+                'username': a,
+                'password': 'ErrorPassword',
+            }, follow_redirects = True)
+
+            assert f'密码错误，您还有 {first_total_failed_attempts - current_attempt_count} 次尝试机会' in response.get_data(as_text=True)
+
+
+        assert '账户因多次失败已被暂时锁定'.encode('utf_8') in response.data
+
+        if current_attempt_count == first_total_failed_attempts:
+            sleep(seconds=180)
+
+        second_total_failed_attempts = 3
+        current_attempt_count = 0
+        while current_attempt_count >= 3:
+            current_attempt_count += 1
+            response = client.post('/login', data = {
+                'username': a,
+                'password': 'ErrorPassword',
+            }, follow_redirects = True)
+
+            assert f'密码错误，您还有 {second_total_failed_attempts - current_attempt_count} 次尝试机会' in response.get_data(as_text=True)
+
+        assert '账户因多次失败已被锁定24小时'.encode('utf_8') in response.data

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 import secrets
 import re
 import os
@@ -34,6 +35,17 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     is_active = db.Column(db.Boolean, default=True)
+    failed_attempts = db.Column(db.Integer, default=0)  # 失败尝试次数
+    locked_until = db.Column(db.DateTime, nullable=True)  # 锁定直到的时间
+    last_failed_time = db.Column(db.DateTime, nullable=True)  # 上次失败时间
+
+    @property
+    def is_locked(self):
+        """检查账户是否被锁定"""
+        if self.locked_until:
+            from datetime import datetime
+            return datetime.utcnow() < self.locked_until
+        return False
 
     @property
     def password(self):
@@ -43,6 +55,23 @@ class User(db.Model):
     def password(self, password):
         self.password_hash = generate_password_hash(password)
 
+# formal version
+def get_lock_time(failed_attempts):
+    """根据失败次数返回锁定时间"""
+    if failed_attempts >= 8:  # 总共8次失败(5+3)
+        return timedelta(days=1)  # 锁定1天
+    elif failed_attempts >= 5:  # 第一次5次失败
+        return timedelta(minutes=5)  # 锁定5分钟
+    return None
+
+# test version
+def get_lock_time_test_version(failed_attempts):
+    """根据失败次数返回锁定时间（测试用简化版本）"""
+    if failed_attempts >= 8:  # 总共8次失败(5+3)
+        return timedelta(minutes=3)  # 测试用改为3分钟
+    elif failed_attempts >= 5:  # 第一次5次失败
+        return timedelta(minutes=2)  # 测试用改为2分钟
+    return None
 
 def init_db():
     with app.app_context():
@@ -84,7 +113,6 @@ def index():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -97,21 +125,56 @@ def login():
             flash('账户不存在', 'error')
             return redirect(url_for('login'))
 
+        # 检查账户是否被锁定
+        if user.is_locked:
+            remaining_time = user.locked_until - datetime.utcnow()
+            minutes = int(remaining_time.total_seconds() // 60)
+            seconds = int(remaining_time.total_seconds() % 60)
+            flash(f'账户已锁定，请 {minutes} 分 {seconds} 秒后再试', 'error')
+            return redirect(url_for('login'))
+
         if not user.is_active:
             flash('账户未激活，请先激活账户', 'warning')
-            return redirect(url_for('activate'))  # 重定向到激活页面
+            return redirect(url_for('activate'))
 
-        if user and check_password_hash(user.password_hash, password):
+        # 检查密码
+        if check_password_hash(user.password_hash, password):
+            # 登录成功，重置失败计数
+            user.failed_attempts = 0
+            user.locked_until = None
+            user.last_failed_time = None
+            db.session.commit()
+
             session['user_id'] = user.id
             session['username'] = user.username
             user.is_active = True
 
             return redirect(url_for('home'))
         else:
-            flash('密码错误', 'error')
+            # 密码错误，增加失败计数
+            user.failed_attempts += 1
+            user.last_failed_time = datetime.utcnow()
+
+            # 检查是否需要锁定账户
+            lock_duration = get_lock_time_test_version(user.failed_attempts)
+            if lock_duration:
+                user.locked_until = datetime.utcnow() + lock_duration
+                if user.failed_attempts >= 8:
+                    flash('账户因多次失败已被锁定24小时', 'error')
+                else:
+                    flash('账户因多次失败已被暂时锁定', 'error')
+            else:
+                remaining_attempts = max(0, 5 - user.failed_attempts)
+                if remaining_attempts > 0:
+                    flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
+                else:
+                    remaining_attempts = max(0, 8 - user.failed_attempts)
+                    flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
+
+            db.session.commit()
+            return redirect(url_for('login'))
 
     return render_template('login.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
