@@ -1,4 +1,4 @@
-from time import sleep
+import time
 
 import pytest
 from app import User
@@ -129,41 +129,53 @@ class TestUserActive:
         assert response.status_code == 200
         assert '用户登录'.encode('utf_8') in response.data
 
+
 class TestErrorPassWordCount:
-    @pytest.mark.parametrize("a,b",[('testUser_name25','5tgb^YHN')])
-    def test_error_password_count(self, client,a,b):
-        response = client.post('/register', data = {
-            'username': a,
-            'password': b,
-        }, follow_redirects = True)
+    @pytest.mark.parametrize("username,password", [('testUser_name25', '5tgb^YHN')])
+    def test_error_password_count(self, client, username, password):
+        # 1. 先注册测试用户
+        response = client.post('/register', data={
+            'username': username,
+            'password': password,
+        }, follow_redirects=True)
+        assert response.status_code == 200
 
-        first_total_failed_attempts = 5
-        current_attempt_count = 0
+        # 2. 测试前5次错误尝试
+        for attempt in range(5):
+            response = client.post('/login', data={
+                'username': username,
+                'password': 'WrongPassword',
+            }, follow_redirects=True)
 
-        while current_attempt_count >= 5:
-            current_attempt_count += 1
-            response = client.post('/login', data = {
-                'username': a,
-                'password': 'ErrorPassword',
-            }, follow_redirects = True)
+            remaining = 4 - attempt
+            if remaining > 0:
+                assert f'密码错误，您还有 {remaining} 次尝试机会' in response.get_data(as_text=True)
+            else:
+                assert '密码错误，账户已被锁定2分钟' in response.get_data(as_text=True)
 
-            assert f'密码错误，您还有 {first_total_failed_attempts - current_attempt_count} 次尝试机会' in response.get_data(as_text=True)
+        # 3. 等待2分钟锁定时间结束（测试版本锁定2分钟）
+        time.sleep(121)  # 2分钟+1秒缓冲
 
+        # 4. 测试后3次错误尝试
+        for attempt in range(3):
+            response = client.post('/login', data={
+                'username': username,
+                'password': 'WrongPassword',
+            }, follow_redirects=True)
 
-        assert '账户因多次失败已被暂时锁定'.encode('utf_8') in response.data
+            remaining = 2 - attempt
+            if remaining > 0:
+                assert f'密码错误，您还有 {remaining} 次尝试机会，多次错误将锁定账户24小时' in response.get_data(as_text=True)
+            else:
+                assert '账户因多次失败已被锁定24小时' in response.get_data(as_text=True)
 
-        if current_attempt_count == first_total_failed_attempts:
-            sleep(seconds=180)
+        # 5. 等待3分钟锁定时间结束
+        # 6. 验证24小时锁定（测试版本锁定3分钟）
+        time.sleep(181)  # 3分钟+1秒缓冲
 
-        second_total_failed_attempts = 3
-        current_attempt_count = 0
-        while current_attempt_count >= 3:
-            current_attempt_count += 1
-            response = client.post('/login', data = {
-                'username': a,
-                'password': 'ErrorPassword',
-            }, follow_redirects = True)
-
-            assert f'密码错误，您还有 {second_total_failed_attempts - current_attempt_count} 次尝试机会' in response.get_data(as_text=True)
-
-        assert '账户因多次失败已被锁定24小时'.encode('utf_8') in response.data
+        # 7. 最后验证可以正常登录
+        response = client.post('/login', data={
+            'username': username,
+            'password': password,  # 正确的密码
+        }, follow_redirects=True)
+        assert 'home' in response.request.path  # 验证重定向到home页面

@@ -20,11 +20,15 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }}">
                         {{ message }}
-                        {% if '锁定' in message or '锁定24小时' in message %}
-                            <div class="lock-info">
-                                出于安全考虑，多次失败登录会导致账户被暂时锁定。
-                            </div>
-                        {% endif %}
+                            {% if '锁定' in message %}
+                                <div class="lock-info">
+                                    出于安全考虑，多次失败登录会导致账户被暂时锁定。
+                                    {# 仅在首次锁定时显示额外信息 #}
+                                    {% if '2分钟' in message %}
+                                        （首次锁定2分钟，后续错误将延长锁定时间）
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                     </div>
                 {% endfor %}
             {% endif %}

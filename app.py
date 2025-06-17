@@ -67,10 +67,10 @@ def get_lock_time(failed_attempts):
 # test version
 def get_lock_time_test_version(failed_attempts):
     """根据失败次数返回锁定时间（测试用简化版本）"""
-    if failed_attempts >= 8:  # 总共8次失败(5+3)
-        return timedelta(minutes=3)  # 测试用改为3分钟
-    elif failed_attempts >= 5:  # 第一次5次失败
-        return timedelta(minutes=2)  # 测试用改为2分钟
+    if failed_attempts == 5:  # 第5次失败锁定2分钟
+        return timedelta(minutes=2)
+    elif failed_attempts >= 8:  # 第8次失败锁定3分钟（测试用）
+        return timedelta(minutes=3)
     return None
 
 def init_db():
@@ -155,21 +155,18 @@ def login():
             user.failed_attempts += 1
             user.last_failed_time = datetime.utcnow()
 
-            # 检查是否需要锁定账户
-            lock_duration = get_lock_time_test_version(user.failed_attempts)
-            if lock_duration:
-                user.locked_until = datetime.utcnow() + lock_duration
-                if user.failed_attempts >= 8:
-                    flash('账户因多次失败已被锁定24小时', 'error')
-                else:
-                    flash('账户因多次失败已被暂时锁定', 'error')
-            else:
-                remaining_attempts = max(0, 5 - user.failed_attempts)
-                if remaining_attempts > 0:
-                    flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
-                else:
-                    remaining_attempts = max(0, 8 - user.failed_attempts)
-                    flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
+            if user.failed_attempts < 5:
+                remaining_attempts = 5 - user.failed_attempts
+                flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
+            elif user.failed_attempts == 5:
+                user.locked_until = datetime.utcnow() + get_lock_time_test_version(user.failed_attempts)
+                flash('密码错误，账户已被锁定2分钟', 'error')
+            elif 5 < user.failed_attempts < 8:
+                remaining_attempts = 8 - user.failed_attempts
+                flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会，多次错误将锁定账户24小时', 'error')
+            else:  # >= 8 次
+                user.locked_until = datetime.utcnow() + get_lock_time_test_version(user.failed_attempts)
+                flash('账户因多次失败已被锁定24小时', 'error')
 
             db.session.commit()
             return redirect(url_for('login'))
@@ -278,9 +275,9 @@ def logout():
 def delete_account():
     app.logger.warning(f"用户 {session['username']} 删除了账户")
     if 'user_id' not in session:
-        """注销用户，永久注销"""
+        #注销用户，永久注销
         return redirect(url_for('login'))
-    """从数据库删除用户资料"""
+    #从数据库删除用户资料
     user = User.query.get(session['user_id'])
     if user:
         db.session.delete(user)
