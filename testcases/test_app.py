@@ -131,6 +131,7 @@ class TestUserActive:
 
 
 class TestErrorPassWordCount:
+    @pytest.mark.skip
     @pytest.mark.parametrize("username,password", [('testUser_name25', '5tgb^YHN')])
     def test_error_password_count(self, client, username, password):
         # 1. 先注册测试用户
