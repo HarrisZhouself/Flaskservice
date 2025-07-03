@@ -53,12 +53,100 @@
         .btn-delete:hover {
             background: #333;
         }
+        /* 新增翻译功能样式 */
+        .translate-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            border: 1px solid #d0e0f0;
+        }
+        .translate-form {
+            display: flex;
+            gap: 10px;
+        }
+        .translate-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .translate-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .translate-btn:hover {
+            background: #45a049;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            min-height: 20px;
+        }
+        .flash-messages {
+            margin: 15px 0;
+        }
+        .flash-message {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .flash-success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border-left: 4px solid #3c763d;
+        }
+        .flash-error {
+            background-color: #f2dede;
+            color: #a94442;
+            border-left: 4px solid #a94442;
+        }
+        .flash-warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+            border-left: 4px solid #8a6d3b;
+        }
     </style>
 </head>
 <body>
-    <div id ="userspace" class="welcome-container">
+    <div id="userspace" class="welcome-container">
         <h1>欢迎, {{ username }}!</h1>
         <p>您已成功登录系统</p>
+
+        <!-- 显示Flash消息 -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- 新增翻译功能部分 -->
+        <div class="translate-section">
+            <h2>英译汉词典</h2>
+            <form class="translate-form" action="{{ url_for('translate_word') }}" method="post">
+                <input type="text" name="word" class="translate-input" placeholder="输入英文单词..." required>
+                <button type="submit" class="translate-btn">翻译</button>
+            </form>
+            <div class="result-box">
+                {% if word and definition %}
+                    <p><strong>{{ word }}:</strong> {{ definition }}</p>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="logout-section">
             <!-- 退出按钮 -->
             <form action="{{ url_for('logout') }}" method="get">

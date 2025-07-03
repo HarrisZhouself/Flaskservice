@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+import sqlite3
 import secrets
 import re
 import os
@@ -18,7 +19,7 @@ if not app.secret_key:
 # 配置数据库
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_dir = os.path.join(basedir, 'instance')
-db_path = os.path.join(db_dir, 'data.db')
+db_path = os.path.join(db_dir, 'registerData.db')
 os.makedirs(db_dir, exist_ok=True)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
@@ -83,6 +84,43 @@ def init_db():
             raise
 
 init_db()
+
+
+# 在app.py中添加词典查询功能
+def get_word_definition(word):
+    """查询单词的中文释义"""
+    dictionary_db = os.path.join(basedir, 'instance', 'dictionary.db')
+    try:
+        conn = sqlite3.connect(dictionary_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT translation FROM dictionary WHERE word = ?", (word.lower(),))
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else None
+    except Exception as e:
+        app.logger.error(f"查询词典时出错: {str(e)}")
+        return None
+
+
+# 添加新的路由处理翻译请求
+@app.route('/translate', methods=['POST'])
+def translate_word():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    word = request.form.get('word', '').strip()
+    if not word:
+        flash('请输入要查询的单词', 'error')
+        return redirect(url_for('home'))
+
+    definition = get_word_definition(word)
+    if definition:
+        flash(f"{word}: {definition}", 'success')
+    else:
+        flash(f'未找到单词 "{word}" 的释义', 'warning')
+
+    return redirect(url_for('home'))
+
 
 @app.teardown_request
 def teardown_request(exception=None):
@@ -242,7 +280,7 @@ def activate():
             session.permanent = True
 
             flash('账户已激活', 'success')
-            return redirect(url_for('home'))
+            return redirect(url_for('login'))
 
         except Exception as e:
             db.session.rollback()
