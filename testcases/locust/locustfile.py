@@ -59,7 +59,7 @@ class WebsiteUser(HttpUser):
 
         # 2. 添加请求头（根据实际情况调整）
         headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "app/x-www-form-urlencoded",
             "X-Request-ID": f"locust_{timestamp}"
         }
 

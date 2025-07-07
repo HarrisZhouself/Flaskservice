@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .welcome-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .user-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        .btn-logout {
+            background: #f44336;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-logout:hover {
+            background: #d32f2f;
+        }
+        .btn-delete {
+            background: #555;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .btn-delete:hover {
+            background: #333;
+        }
+        /* 新增翻译功能样式 */
+        .translate-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            border: 1px solid #d0e0f0;
+        }
+        .translate-form {
+            display: flex;
+            gap: 10px;
+        }
+        .translate-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .translate-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .translate-btn:hover {
+            background: #45a049;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            min-height: 20px;
+        }
+        .flash-messages {
+            margin: 15px 0;
+        }
+        .flash-message {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .flash-success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border-left: 4px solid #3c763d;
+        }
+        .flash-error {
+            background-color: #f2dede;
+            color: #a94442;
+            border-left: 4px solid #a94442;
+        }
+        .flash-warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+            border-left: 4px solid #8a6d3b;
+        }
+        /* 添加历史记录区域样式 */
+            .history-section {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        position: relative;
+        }
+
+        .history-list {
+            margin-top: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .history-word {
+            font-weight: bold;
+            width: 20%;
+        }
+
+        .history-translation {
+            width: 60%;
+            padding: 0 10px;
+        }
+
+        .history-time {
+            width: 20%;
+            text-align: right;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .btn-clear {
+            background: #ff9800;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+
+        .btn-clear:hover {
+            background: #e68a00;
+        }
+
+        .no-history {
+            color: #999;
+            text-align: center;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="userspace" class="welcome-container">
+        <h1>欢迎, {{ username }}!</h1>
+        <p>您已成功登录系统</p>
+
+        <!-- 显示Flash消息 -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- 新增翻译功能部分 -->
+        <div class="translate-section">
+            <h2>英译汉词典</h2>
+            <form class="translate-form" action="{{ url_for('translate.translate_word') }}" method="post">
+                <input type="text" name="word" class="translate-input" placeholder="输入英文单词..." required>
+                <button type="submit" class="translate-btn">翻译</button>
+            </form>
+            <div class="result-box">
+                {% if word and definition %}
+                    <p><strong>{{ word }}:</strong> {{ definition }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="logout-section">
+            <!-- 退出按钮 -->
+            <form action="{{ url_for('core.logout') }}" method="get">
+                <button id="logout_submit" type="submit" class="btn-logout">退出登录</button>
+            </form>
+
+            <!-- 注销按钮 -->
+            <form action="{{ url_for('core.delete_account') }}" method="post"
+                onsubmit="return confirm('确定要永久注销账户吗？此操作不可逆！')">
+                <button id="delete_submit" type="submit" class="btn-delete">永久注销账户</button>
+            </form>
+        </div>
+        <!-- 翻译历史记录区域 -->
+        <div class="history-section">
+            <h2>最近翻译记录</h2>
+
+            <form action="{{ url_for('translate.clear_history') }}" method="post"
+                  onsubmit="return confirm('确定要清除所有翻译历史吗？')">
+                <button type="submit" class="btn-clear">清除历史记录</button>
+            </form>
+
+            <div class="history-list">
+                {% if history %}
+                    {% for record in history %}
+                        <div class="history-item">
+                            <span class="history-word">{{ record.word }}</span>
+                            <span class="history-translation">{{ record.translation }}</span>
+                            <span class="history-time">{{ record.time }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-history">暂无翻译历史</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

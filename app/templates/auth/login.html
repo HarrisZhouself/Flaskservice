@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>用户登录</title>
+    <style>
+        .container { max-width: 400px; margin: 50px auto; }
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-error { background: #ffebee; color: #c62828; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .alert-warning { background: #fff8e1; color: #ff8f00; }
+        .lock-info { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>用户登录</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                            {% if '锁定' in message %}
+                                <div class="lock-info">
+                                    出于安全考虑，多次失败登录会导致账户被暂时锁定。
+                                    {# 仅在首次锁定时显示额外信息 #}
+                                    {% if '2分钟' in message %}
+                                        （首次锁定2分钟，后续错误将延长锁定时间）
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label for="username">用户名:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">密码:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button id="login_submit" type="submit">登录</button>
+        </form>
+
+        <p>账户未激活？<a href="{{ url_for('auth.activate') }}">立即激活</a></p>
+        <p>还没有账号？<a href="{{ url_for('auth.register') }}">立即注册</a></p>
+        <p>忘记密码？<a href="#">重置密码</a></p>
+    </div>
+</body>
+</html>
