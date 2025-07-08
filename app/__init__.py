@@ -1,17 +1,18 @@
 import os
+import secrets
+
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from .utils import init_db, init_history_db
+from .models import db
+from flask_wtf.csrf import CSRFProtect
 
 load_dotenv()
-
-db = SQLAlchemy()
-
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.getenv('FLASK_SECRET_KEY', default=secrets.token_hex(32))
+    csrf = CSRFProtect(app)
 
     if not app.secret_key:
         raise RuntimeError("未设置FLASK_SECRET_KEY！")
@@ -29,11 +30,11 @@ def create_app():
     # 注册蓝图
     from .auth.routes import auth_bp
     from .translate.routes import translate_bp
-    from .main import main_bp
+    from .core.routes import core_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(translate_bp)
-    app.register_blueprint(main_bp)
+    app.register_blueprint(core_bp)
 
     # 初始化数据库
     with app.app_context():
