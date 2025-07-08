@@ -196,6 +196,7 @@
         <div class="translate-section">
             <h2>英译汉词典</h2>
             <form class="translate-form" action="{{ url_for('translate.translate_word') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="text" name="word" class="translate-input" placeholder="输入英文单词..." required>
                 <button type="submit" class="translate-btn">翻译</button>
             </form>
@@ -209,12 +210,14 @@
         <div class="logout-section">
             <!-- 退出按钮 -->
             <form action="{{ url_for('core.logout') }}" method="get">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button id="logout_submit" type="submit" class="btn-logout">退出登录</button>
             </form>
 
             <!-- 注销按钮 -->
             <form action="{{ url_for('core.delete_account') }}" method="post"
                 onsubmit="return confirm('确定要永久注销账户吗？此操作不可逆！')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button id="delete_submit" type="submit" class="btn-delete">永久注销账户</button>
             </form>
         </div>
@@ -224,6 +227,7 @@
 
             <form action="{{ url_for('translate.clear_history') }}" method="post"
                   onsubmit="return confirm('确定要清除所有翻译历史吗？')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-clear">清除历史记录</button>
             </form>
 
