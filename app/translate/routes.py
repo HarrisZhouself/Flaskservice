@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, current_app
-from app import db
+from ..models import db
 from ..models import TranslateHistory
 from ..utils import get_word_definition
 import logging

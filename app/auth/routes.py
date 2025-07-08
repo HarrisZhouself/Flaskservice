@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
 
-from app import db
-from ..models import User  # 从上级models导入
+from ..models import User, db  # 从上级models导入
 from ..utils import validate_password, get_lock_time_test_version, logger, validate_username # 从上级utils导入
 from datetime import datetime
 from werkzeug.security import check_password_hash

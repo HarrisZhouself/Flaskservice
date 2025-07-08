@@ -2,10 +2,9 @@ import os
 import re
 import sqlite3
 import logging
-from datetime import timedelta, datetime
-
-from .models import TranslateHistory  # 导入模型和db
-from app import db
+from datetime import timedelta
+from flask import current_app
+from .models import TranslateHistory, db  # 导入模型和db
 
 logger = logging.getLogger(__name__)
 
@@ -136,23 +135,14 @@ def get_translation_history(user_id, limit=10):
 
 def init_history_db():
     try:
-        # 确保历史记录表存在
-        with db.engine.begin() as conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS translate_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER NOT NULL,
-                    word TEXT NOT NULL,
-                    translation TEXT NOT NULL,
-                    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
+        db.create_all()  # 这会创建所有已定义的模型对应的表
         logger.info("历史记录数据库初始化完成")
+        print("🛢️ 历史记录数据库初始化完成")
     except Exception as e:
         logger.error(f"初始化历史记录数据库失败: {str(e)}")
 
 def init_db():
-    with app.app_context():
+    with current_app.app_context():
         try:
             db.create_all()
             print("🛢️ 数据库初始化完成")
