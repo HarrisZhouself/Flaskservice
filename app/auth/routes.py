@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from markupsafe import Markup
 
 from ..models import User, db  # 从上级models导入
 from ..utils import validate_password, get_lock_time_test_version, logger, validate_username # 从上级utils导入
@@ -33,9 +34,9 @@ def login():
             return redirect(url_for('auth.login'))
 
         if not user.is_active:
-            flash('账户未激活，请先激活账户', 'warning')
             # 添加激活链接到flash消息
-            flash('点击<a href="{}">此处</a>激活账户'.format(url_for('auth.activate')), 'info')
+            flash('账户未激活，请先激活账户', 'warning')
+            flash(Markup('点击<a href="{}">此处</a>激活账户').format(url_for('auth.activate')), 'info')
             return redirect(url_for('auth.login'))
 
         # 检查密码
@@ -51,7 +52,6 @@ def login():
             session['username'] = user.username
             session.modified = True
             user.is_active = True
-            print(f"会话已设置: {dict(session)}")
 
             return redirect(url_for('core.home'))
         else:

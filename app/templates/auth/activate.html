@@ -31,7 +31,8 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="/activate">
+        <form method="POST" action={{ url_for('auth.activate') }}>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label for="username">用户名:</label>
                 <input type="text" id="username" name="username" required>
