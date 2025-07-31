@@ -1,1 +1,7 @@
-"instance/data.db" 
+allureReport/temps/*
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+instance/*

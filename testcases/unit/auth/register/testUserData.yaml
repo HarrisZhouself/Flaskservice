@@ -1,0 +1,76 @@
+register_test_user_info:
+#password length
+  - username: testUser_name0
+    password: 'A1*bcde'
+    valid: false
+  - username: testUser_name1
+    password: 'A1*bcdef'
+    valid: true
+  - username: testUser_name2
+    password: 'A1*bcdefgh12345'
+    valid: true
+  - username: testUser_name3
+    password: 'A1*bcdefgh123456'
+    valid: true
+  - username: testUser_name4
+    password: 'A1*bcdefgh1234567'
+    valid: false
+
+#type comb
+#1+2+3+4
+  - username: testUser_name5
+    password: 'A1*bcdef'
+    valid: true
+  - username: testUser_name6
+    password: '12345678'
+    valid: false
+  - username: testUser_name7
+    password: 'abcdefgh'
+    valid: false
+  - username: testUser_name8
+    password: 'ABCDEFGH'
+    valid: false
+  - username: testUser_name9
+    password: '********'
+    valid: false
+  - username: testUser_name10
+    password: 'AAAA1111'
+    valid: false
+  - username: testUser_name11
+    password: 'AAAA****'
+    valid: false
+  - username: testUser_name12
+    password: 'AAAAbbbb'
+    valid: false
+  - username: testUser_name13
+    password: 'aaaa1111'
+    valid: false
+  - username: testUser_name14
+    password: 'aaaa****'
+    valid: false
+  - username: testUser_name15
+    password: '1111****'
+    valid: false
+  - username: testUser_name16
+    password: 'AAaa****'
+    valid: false
+  - username: testUser_name17
+    password: 'AAaa1111'
+    valid: false
+  - username: testUser_name18
+    password: 'aa11****'
+    valid: false
+  - username: testUser_name19
+    password: '11AA****'
+    valid: false
+
+#password_special_char:
+  - username: testUser_name20
+    password: '3edc$sdF'
+    valid: true
+  - username: testUser_name21
+    password: '3eDc$ df'
+    valid: false
+  - username: testUser_name22
+    password: '3eDc$¥df'
+    valid: false

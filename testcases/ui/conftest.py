@@ -67,3 +67,4 @@ def browser(request, app):
     finally:
         if driver is not None:
             driver.quit()
+

@@ -1,5 +1,4 @@
 import pytest
-from app import User
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -33,6 +32,7 @@ class TestUI:
 
             # 验证登录成功
             # 检查是否跳转到 /home
+            # WebDriverWait 也是断言的一种，可以等待检查操作是否完成
             WebDriverWait(driver, 10).until(
                 EC.url_contains("/home")  # 检查是否跳转到首页
             )

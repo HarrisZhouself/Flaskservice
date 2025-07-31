@@ -215,11 +215,17 @@
             </form>
 
             <!-- 注销按钮 -->
-            <form action="{{ url_for('core.delete_account') }}" method="post"
-                onsubmit="return confirm('确定要永久注销账户吗？此操作不可逆！')">
+            <form action="{{ url_for('core.delete_account') }}" method="post" id="deleteForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button id="delete_submit" type="submit" class="btn-delete">永久注销账户</button>
+                <input type="password" name="password" placeholder="输入密码确认" required>
+                <button type="submit" class="btn-delete">永久注销账户</button>
             </form>
+
+            <script>
+                document.getElementById('deleteForm').onsubmit = function() {
+                    return confirm('确定要永久注销账户吗？此操作不可逆！');
+                };
+            </script>
         </div>
         <!-- 翻译历史记录区域 -->
         <div class="history-section">
