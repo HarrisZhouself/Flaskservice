@@ -24,7 +24,7 @@ def login_required(f):
     return wrapper
 
 
-@core_bp.route('/home')
+@core_bp.route('/core/home')
 @login_required
 def home():
     print(f"in home page")

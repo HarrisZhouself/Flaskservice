@@ -13,6 +13,14 @@ def login():
     print(f"当前请求方法: {request.method}")
     if request.method == 'POST':
         print("✅ 收到POST请求")
+
+        print("POST 请求数据:", request.form)
+
+        # 打印特定字段
+        print("用户名:", request.form.get('username'))
+        print("密码:", request.form.get('password'))
+
+        print("CSRF Token:", request.form.get('csrf_token'))
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         logger.info(f"Login attempt: {username}")
@@ -80,20 +88,25 @@ def login():
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+
+        print("POST 请求数据:", request.form)
+
+        # 打印特定字段
+
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
         is_username_valid, username_msg = validate_username(username)
         if not is_username_valid:
             flash(username_msg, 'error')
-            flash('注册失败', 'error')
+            flash('用户名无效，注册失败', 'error')
             return redirect(url_for('auth.register'))
 
         # 验证密码复杂度
         is_valid, msg = validate_password(password)
         if not is_valid:
             flash(msg, 'error')
-            flash('注册失败','error')
+            flash('密码无效，注册失败','error')
             return redirect(url_for('auth.register'))
 
         if User.query.filter_by(username=username).first():
@@ -114,6 +127,7 @@ def register():
             session.permanent = True
 
             flash('注册成功！请登录', 'success')
+            print("注册成功，正在进入login页面")
             return redirect(url_for('auth.login'))
 
         except Exception as e:

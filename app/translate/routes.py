@@ -10,6 +10,12 @@ translate_bp = Blueprint('translate', __name__)
 
 @translate_bp.route('/translate', methods=['POST'])
 def translate_word():
+    print("translating......")
+    print("请求头:", request.headers)
+    print("表单数据:", request.form)
+    print("Cookies:", request.cookies)
+    print("Session:", session)
+
     if 'user_id' not in session:
         flash('请先登录', 'warning')
         return redirect(url_for('auth.login'))
@@ -36,7 +42,11 @@ def translate_word():
         db.session.commit()
 
         flash(f'"{word}" 的翻译已保存', 'success')
-        return redirect(url_for('core.home', word=word, definition=definition))
+        return redirect(url_for('core.home',
+                                word=word,
+                                definition=definition,
+                                _anchor='translate-section'  # 滚动到翻译区域
+                                ))
 
     except Exception as e:
         logger.error(f"翻译处理失败: {str(e)}", exc_info=True)
