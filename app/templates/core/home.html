@@ -53,44 +53,21 @@
         .btn-delete:hover {
             background: #333;
         }
-        /* 新增翻译功能样式 */
-        .translate-section {
-            margin: 30px 0;
-            padding: 20px;
-            background-color: #f0f8ff;
-            border-radius: 8px;
-            border: 1px solid #d0e0f0;
-        }
-        .translate-form {
-            display: flex;
-            gap: 10px;
-        }
-        .translate-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .translate-btn {
-            background: #4CAF50;
+        .btn-translate {
+            background: #2196F3;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-bottom: 20px;
         }
-        .translate-btn:hover {
-            background: #45a049;
+        .btn-translate:hover {
+            background: #0b7dda;
         }
-        .result-box {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #fff;
-            border-radius: 4px;
-            border-left: 4px solid #4CAF50;
-            min-height: 20px;
+        .translate-btn-section {
+            margin: 20px 0;
         }
         .flash-messages {
             margin: 15px 0;
@@ -115,65 +92,6 @@
             color: #8a6d3b;
             border-left: 4px solid #8a6d3b;
         }
-        /* 添加历史记录区域样式 */
-            .history-section {
-        margin-top: 30px;
-        padding: 20px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        position: relative;
-        }
-
-        .history-list {
-            margin-top: 15px;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            align-items: center;
-        }
-
-        .history-word {
-            font-weight: bold;
-            width: 20%;
-        }
-
-        .history-translation {
-            width: 60%;
-            padding: 0 10px;
-        }
-
-        .history-time {
-            width: 20%;
-            text-align: right;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .btn-clear {
-            background: #ff9800;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            position: absolute;
-            right: 20px;
-            top: 20px;
-        }
-
-        .btn-clear:hover {
-            background: #e68a00;
-        }
-
-        .no-history {
-            color: #999;
-            text-align: center;
-            padding: 15px;
-        }
     </style>
 </head>
 <body>
@@ -192,19 +110,11 @@
             {% endwith %}
         </div>
 
-        <!-- 新增翻译功能部分 -->
-        <div class="translate-section">
-            <h2>英译汉词典</h2>
-            <form class="translate-form" action="{{ url_for('translate.translate_word') }}" method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="text" name="word" class="translate-input" placeholder="输入英文单词..." required>
-                <button type="submit" class="translate-btn">翻译</button>
-            </form>
-            <div class="result-box">
-                {% if word and definition %}
-                    <p><strong>{{ word }}:</strong> {{ definition }}</p>
-                {% endif %}
-            </div>
+        <!-- 翻译功能按钮 -->
+        <div class="translate-btn-section">
+            <button onclick="window.open('{{ url_for("core.translate_page") }}', '_blank')" class="btn-translate">
+                翻译功能
+            </button>
         </div>
 
         <div class="logout-section">
@@ -226,30 +136,6 @@
                     return confirm('确定要永久注销账户吗？此操作不可逆！');
                 };
             </script>
-        </div>
-        <!-- 翻译历史记录区域 -->
-        <div class="history-section">
-            <h2>最近翻译记录</h2>
-
-            <form action="{{ url_for('translate.clear_history') }}" method="post"
-                  onsubmit="return confirm('确定要清除所有翻译历史吗？')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-clear">清除历史记录</button>
-            </form>
-
-            <div class="history-list">
-                {% if history %}
-                    {% for record in history %}
-                        <div class="history-item">
-                            <span class="history-word">{{ record.word }}</span>
-                            <span class="history-translation">{{ record.translation }}</span>
-                            <span class="history-time">{{ record.time }}</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="no-history">暂无翻译历史</p>
-                {% endif %}
-            </div>
         </div>
     </div>
 </body>

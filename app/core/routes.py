@@ -30,11 +30,17 @@ def home():
     print(f"in home page")
     # 直接使用session中的用户名，避免重复验证
     return render_template('core/home.html',
+                         username=session.get('username', 'Guest'))
+
+
+@core_bp.route('/translate')
+@login_required
+def translate_page():
+    return render_template('core/translate.html',
                          username=session.get('username', 'Guest'),
                          word=request.args.get('word', ''),
                          definition=request.args.get('definition', ''),
                          history=get_translation_history(session['user_id']))
-
 
 @core_bp.route('/logout', methods=['GET', 'POST'])
 def logout():

@@ -23,14 +23,14 @@ def translate_word():
     word = request.form.get('word', '').strip()
     if not word:
         flash('请输入要查询的单词', 'error')
-        return redirect(url_for('core.home'))
+        return redirect(url_for('core.translate_page'))
 
     try:
         definition = get_word_definition(word)
 
         if not definition:
             flash(f'未找到单词 "{word}" 的释义', 'warning')
-            return redirect(url_for('core.home'))
+            return redirect(url_for('core.translate_page'))
 
         # 保存到历史记录
         new_history = TranslateHistory(
@@ -42,7 +42,7 @@ def translate_word():
         db.session.commit()
 
         flash(f'"{word}" 的翻译已保存', 'success')
-        return redirect(url_for('core.home',
+        return redirect(url_for('core.translate_page',
                                 word=word,
                                 definition=definition,
                                 _anchor='translate-section'  # 滚动到翻译区域
@@ -51,7 +51,7 @@ def translate_word():
     except Exception as e:
         logger.error(f"翻译处理失败: {str(e)}", exc_info=True)
         flash('翻译处理过程中出现错误', 'error')
-        return redirect(url_for('core.home'))
+        return redirect(url_for('core.translate_page'))
 
 
 @translate_bp.route('/clear_history', methods=['POST'])
@@ -69,4 +69,4 @@ def clear_history():
         flash('清除历史记录失败', 'error')
 
     # 使用新的端点引用
-    return redirect(url_for('core.home'))  # 使用 main.home
+    return redirect(url_for('core.translate_page'))  # 使用 main.translate_page
