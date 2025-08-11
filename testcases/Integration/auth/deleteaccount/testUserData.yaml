@@ -1,0 +1,4 @@
+delete_test_user_info:
+#password length
+  - username: testUser_delete
+    password: '1qaz@WSX'

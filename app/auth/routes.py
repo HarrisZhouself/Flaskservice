@@ -12,15 +12,7 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     print(f"当前请求方法: {request.method}")
     if request.method == 'POST':
-        print("✅ 收到POST请求")
 
-        print("POST 请求数据:", request.form)
-
-        # 打印特定字段
-        print("用户名:", request.form.get('username'))
-        print("密码:", request.form.get('password'))
-
-        print("CSRF Token:", request.form.get('csrf_token'))
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         logger.info(f"Login attempt: {username}")
@@ -48,7 +40,7 @@ def login():
             return redirect(url_for('auth.login'))
 
         # 检查密码
-        if check_password_hash(user.password_hash, password):
+        if user.verify_password(password):
             print(f"in check_password_hash")
             # 登录成功，重置失败计数
             user.failed_attempts = 0
@@ -88,11 +80,7 @@ def login():
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-
-        print("POST 请求数据:", request.form)
-
         # 打印特定字段
-
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
