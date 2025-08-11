@@ -1,0 +1,21 @@
+login_test_user_info:
+  - registerUsername: testUser_name23
+    registerPassword: '3edc$sdF'
+    loginUsername: testUser_name23
+    loginPassword: '3edc$sdF'
+    valid: true
+    expect_error: null
+
+  - registerUsername: testUser_name24
+    registerPassword: '3edc$sdF'
+    loginUsername: testUser_name25
+    loginPassword: '3edc$sdF'
+    valid: false
+    expect_error: username_error
+
+  - registerUsername: testUser_name26
+    registerPassword: '3edc$sdF'
+    loginUsername: testUser_name26
+    loginPassword: '3edc$sdZ'
+    valid: false
+    expect_error: password_error

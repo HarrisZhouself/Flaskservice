@@ -28,7 +28,6 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-
 @pytest.fixture(autouse=True)
 def cleanup_db(app):
     #自动清理测试数据库

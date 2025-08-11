@@ -42,35 +42,40 @@ def translate_page():
                          definition=request.args.get('definition', ''),
                          history=get_translation_history(session['user_id']))
 
+
 @core_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
     if 'user_id' not in session:
         abort(401)
-    user = User.query.get(session['user_id'])
+
+    user = db.session.get(User, session['user_id'])
     if user:
         user.is_active = False
         db.session.commit()
-        session.clear()  # 立即清除会话
-        flash('已安全退出', 'success')
 
     session.clear()
-    flash('您已安全退出，在激活后可以重新登录', 'info')
+    flash('您已安全退出', 'success' if user else 'info')
     return redirect(url_for('auth.login'))
 
 
-@core_bp.route('/delete_account', methods=['POST'])
-def delete_account():
-    logger.warning(f"用户 {session['username']} 删除了账户")
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
-
-    # 从数据库删除用户资料
-    user = User.query.get(session['user_id'])
+def _delete_user(user_id):
+    user = db.session.get(User, user_id)
     if user:
         db.session.delete(user)
         db.session.commit()
+        return True
+    return False
+
+
+# 视图函数只处理 HTTP 相关逻辑
+@core_bp.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        abort(401)
+
+    if _delete_user(session['user_id']):
+        logger.warning(f"用户 {session['username']} 删除了账户")
 
     session.clear()
     flash('您的信息已经清除完毕，感谢使用我们的服务', 'warning')
     return redirect(url_for('auth.login'))
-

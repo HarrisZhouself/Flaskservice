@@ -1,57 +1,129 @@
-import os
 import pytest
-import yaml
+import re
+from unittest.mock import MagicMock, patch, PropertyMock
+from flask import get_flashed_messages
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# 构建yaml文件的完整路径
-yaml_path = os.path.join(current_dir, 'testUserData.yaml')
+from selenium.webdriver.common import alert
+from sqlalchemy.testing.provision import follower_url_from_main
+from werkzeug.security import generate_password_hash, check_password_hash
 
-def get_login_test_user_info():
-    with open(yaml_path) as f:
-        data = yaml.safe_load(f)
-    return [(user['registerUsername'], user['registerPassword'],user['loginUsername'], user['loginPassword'],user['valid'],user['expect_error']) for user in data['login_test_user_info']]
+import app.models
+from app.auth.routes import auth_bp
+
+TEST_USERNAME = 'testUser_Login_unit'
+TEST_PASSWORD = '2wsx#EDC'
+TEST_HASHED_PASSWORD = generate_password_hash(TEST_PASSWORD)
+
+@pytest.fixture
+def mock_user():
+    mock_user = MagicMock()
+    mock_user.username = TEST_USERNAME
+    mock_user.password_hash = TEST_HASHED_PASSWORD
+    mock_user.id = 1
+    mock_user.is_active = True
+    mock_user.is_locked = False
+    mock_user.failed_attempts = 0
+    mock_user.locked_until = None
+    mock_user.last_failed_time = None
+    mock_user.verify_password.return_value = True
+
+    return mock_user
+
+@pytest.fixture
+def mock_user_not_active():
+    mock_user = MagicMock()
+    mock_user.username = TEST_USERNAME
+    mock_user.password_hash = TEST_HASHED_PASSWORD
+    mock_user.id = 1
+    mock_user.is_active = False
+    mock_user.is_locked = False
+    mock_user.failed_attempts = 0
+    mock_user.locked_until = None
+    mock_user.last_failed_time = None
+    mock_user.verify_password.return_value = True
+
+    return mock_user
+
+def test_login_success(client, mock_user):
+
+    # 2. 替换依赖项
+    with patch('app.models.User.query') as mock_query, \
+            patch('werkzeug.security.check_password_hash', return_value=True) as mock_check, \
+            patch('app.db.session.commit') as mock_commit,\
+            patch('flask_wtf.csrf.validate_csrf', return_value=True),\
+            patch('app.models.User.is_locked',new_callable=PropertyMock,return_value = False):
+        # 配置查询链式调用
+        mock_query.filter_by.return_value.first.return_value = mock_user
+
+        # 3. 发起登录请求
+        response = client.post(
+            '/auth/login', data={'username': TEST_USERNAME, 'password': TEST_PASSWORD},
+            follow_redirects=True
+        )
+
+        # 4. 验证行为
+        assert response.status_code == 200
+        assert '欢迎' in response.get_data(as_text=True)
+        assert '您已成功登录系统' in response.get_data(as_text=True)
+
+        # 验证数据库查询
+        mock_query.filter_by.assert_called_once_with(username=TEST_USERNAME)  # 注意去掉__eq
+        mock_user.verify_password.assert_called_once_with(TEST_PASSWORD)
+        mock_commit.assert_called_once()
+
+        # 验证Session自动设置
+        with client.session_transaction() as sess:
+            assert sess['username'] == TEST_USERNAME
+            assert sess['user_id'] == mock_user.id
+
+def test_login_user_not_exist(client):
+    with patch('app.models.User.query') as mock_query, \
+         patch('flask_wtf.csrf.validate_csrf', return_value=True):
+
+        mock_query.filter_by.return_value.first.return_value = None
+
+        response = client.post(
+            '/auth/login',
+            data={'username': TEST_USERNAME, 'password': TEST_PASSWORD},
+            follow_redirects=True
+        )
+        assert response.status_code == 200
+        assert '账户不存在' in response.get_data(as_text=True)
+
+        #verify flash message
+        messages = get_flashed_messages()
+        assert any('账户不存在' in msg for msg in messages)
+
+        #verify database select
+        mock_query.filter_by.assert_called_once_with(username=TEST_USERNAME)
 
 
-def init_test(client, registerUsername, registerPassword, loginUsername,  loginPassword):
+def test_login_failed_not_active(client, mock_user_not_active):
+    with patch('app.models.User.query') as mock_query, \
+            patch('app.db.session.commit') as mock_commit, \
+            patch('flask_wtf.csrf.validate_csrf', return_value=True), \
+            patch('app.models.User.is_locked', new_callable=PropertyMock, return_value=False):
 
-    registerResponse = client.post('/auth/register', data={
-        'username': registerUsername,
-        'password': registerPassword,
-    }, follow_redirects=True)
+        # 设置mock用户行为
+        mock_user_not_active.verify_password.return_value = True  # 假设密码验证通过
+        mock_query.filter_by.return_value.first.return_value = mock_user_not_active
 
-    assert registerResponse.status_code == 200
-    assert '用户登录' in registerResponse.get_data(as_text=True)
-    assert '注册成功！请登录' in registerResponse.get_data(as_text=True)
+        response = client.post(
+            '/auth/login',
+            data={'username': TEST_USERNAME, 'password': TEST_PASSWORD},
+            follow_redirects=True
+        )
 
-    loginResponse = client.post('/auth/login', data={
-        'username': loginUsername,
-        'password': loginPassword,
-    }, follow_redirects=True)
+        # 验证响应
+        assert response.status_code == 200
+        response_text = response.get_data(as_text=True)
+        assert '账户未激活，请先激活账户' in response_text
+        assert '点击<a href="/auth/activate">此处</a>激活账户' in response_text
 
-    return loginResponse
+        # 验证行为
+        mock_query.filter_by.assert_called_once_with(username=TEST_USERNAME)
+        mock_commit.assert_not_called()
 
-class TestLogin:
-
-    @pytest.mark.parametrize("registerUsername, registerPassword,loginUsername, loginPassword, valid, expect_error", get_login_test_user_info())
-    def test_login(self, client, registerUsername, registerPassword, loginUsername,  loginPassword, valid, expect_error):
-
-        response = init_test(client,registerUsername, registerPassword, loginUsername,  loginPassword)
-
-        if valid:
-            # 预期成功：检查是否跳转到home页
-            assert response.status_code == 200
-            assert '欢迎' in response.get_data(as_text=True)
-            assert '您已成功登录系统' in response.get_data(as_text=True)
-
-        else:
-            if expect_error is 'username_error':
-                # 预期失败：检查是否仍在登录页，并显示错误
-                assert response.status_code == 200  # 或 400（取决于 API 设计）
-                assert '用户登录' in response.get_data(as_text=True)# 确保返回注册页
-                assert '帐户不存在' in response.get_data(as_text=True)
-
-            if expect_error is 'password_error':
-                # 预期失败：检查是否仍在登录页，并显示错误
-                assert response.status_code == 200  # 或 400（取决于 API 设计）
-                assert '用户登录' in response.get_data(as_text=True)  # 确保返回注册页
-                assert '密码错误，您还有 4 次尝试机会' in response.get_data(as_text=True)
+        with client.session_transaction() as sess:
+            assert 'user_id' not in sess
+            assert 'username' not in sess
