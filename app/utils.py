@@ -22,7 +22,7 @@ def get_lock_time_test_version(failed_attempts):
         return timedelta(minutes=2)
     elif failed_attempts >= 8:
         return timedelta(minutes=3)
-    return None
+    return timedelta(minutes=0)
 
 
 def validate_password(password):

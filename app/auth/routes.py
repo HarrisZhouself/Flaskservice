@@ -3,7 +3,7 @@ from markupsafe import Markup
 
 from ..models import User, db  # 从上级models导入
 from ..utils import validate_password, get_lock_time_test_version, logger, validate_username # 从上级utils导入
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -57,19 +57,19 @@ def login():
         else:
             # 密码错误，增加失败计数
             user.failed_attempts += 1
-            user.last_failed_time = datetime.utcnow()
+            user.last_failed_time = datetime.now(timezone.utc)
 
             if user.failed_attempts < 5:
                 remaining_attempts = 5 - user.failed_attempts
                 flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会', 'error')
             elif user.failed_attempts == 5:
-                user.locked_until = datetime.utcnow() + get_lock_time_test_version(user.failed_attempts)
+                user.locked_until = datetime.now(timezone.utc)+ get_lock_time_test_version(user.failed_attempts)
                 flash('密码错误，账户已被锁定2分钟', 'error')
             elif 5 < user.failed_attempts < 8:
                 remaining_attempts = 8 - user.failed_attempts
                 flash(f'密码错误，您还有 {remaining_attempts} 次尝试机会，多次错误将锁定账户24小时', 'error')
             else:  # >= 8 次
-                user.locked_until = datetime.utcnow() + get_lock_time_test_version(user.failed_attempts)
+                user.locked_until = datetime.now(timezone.utc) + get_lock_time_test_version(user.failed_attempts)
                 flash('账户因多次失败已被锁定24小时', 'error')
 
             db.session.commit()
