@@ -1,7 +1,20 @@
 import pytest
 from app import create_app, db
 from app.models import User
-
+from unittest.mock import MagicMock
+@pytest.fixture
+def mock_user():
+    mock_user = MagicMock()
+    mock_user.username = 'testUser_register'
+    mock_user.password_hash = '3edc$RFV'
+    mock_user.id = 1
+    mock_user.is_active = False
+    mock_user.is_locked = False
+    mock_user.failed_attempts = 0
+    mock_user.locked_until = None
+    mock_user.last_failed_time = None
+    mock_user.verify_password.return_value = False
+    return mock_user
 
 @pytest.fixture(scope='module')
 def app():

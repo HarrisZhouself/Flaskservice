@@ -90,15 +90,15 @@ def register():
             flash('用户名无效，注册失败', 'error')
             return redirect(url_for('auth.register'))
 
+        if User.query.filter_by(username=username).first():
+            flash('该用户名已被注册', 'error')
+            return redirect(url_for('auth.register'))
+
         # 验证密码复杂度
         is_valid, msg = validate_password(password)
         if not is_valid:
             flash(msg, 'error')
             flash('密码无效，注册失败','error')
-            return redirect(url_for('auth.register'))
-
-        if User.query.filter_by(username=username).first():
-            flash('该用户名已被注册', 'error')
             return redirect(url_for('auth.register'))
 
         try:
