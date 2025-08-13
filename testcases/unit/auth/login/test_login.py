@@ -14,6 +14,7 @@ TEST_HASHED_PASSWORD = generate_password_hash(TEST_PASSWORD)
 
 @pytest.fixture()
 def mock_user(mock_user):
+    mock_user.username = 'testUser_Login_unit'
     mock_user.verify_password.return_value = True
     mock_user.is_active = True
 
@@ -37,7 +38,6 @@ def mock_not_active_attempts(mock_user):
 
 def test_login_success_with_valid_credentials(client, mock_user):
     # 1.mock_user
-
     # 2. 替换依赖项
     with patch('app.models.User.query') as mock_query, \
             patch('werkzeug.security.check_password_hash', return_value=True) as mock_check, \
