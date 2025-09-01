@@ -127,8 +127,8 @@
             <!-- 注销按钮 -->
             <form action="{{ url_for('core.delete_account') }}" method="post" id="deleteForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="password" name="password" placeholder="输入密码确认" required>
-                <button type="submit" class="btn-delete">永久注销账户</button>
+                <input id = "delete_account_password" type="password" name="password" placeholder="输入密码确认" required>
+                <button id = "delete_account_submit" type="submit" class="btn-delete">永久注销账户</button>
             </form>
 
             <script>

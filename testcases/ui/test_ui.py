@@ -22,7 +22,6 @@ class TestUI:
             #验证注册正常
             assert response.status_code == 200
 
-
             # 输入凭据并提交
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.ID, "username"))
@@ -103,7 +102,6 @@ class TestUI:
             )
 
             #注销用户
-
             driver.find_element(By.ID, "delete_submit").click()
 
             alert = WebDriverWait(driver, 10).until(
